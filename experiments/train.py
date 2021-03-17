@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument("--adv-eps", type=float, default=1e-3, help="adversarial training rate")
     parser.add_argument("--adv-eps-s", type=float, default=1e-5, help="small adversarial training rate")
     # Checkpointing
-    parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
+    parser.add_argument("--exp-name", type=str, default="None", help="name of the experiment")
     parser.add_argument("--save-dir", type=str, default="/tmp/policy/", help="directory in which training state and model should be saved")
     parser.add_argument("--save-rate", type=int, default=1000, help="save model once every time this many episodes are completed")
     parser.add_argument("--load-name", type=str, default="", help="name of which training state and model are loaded, leave blank to load seperately")
@@ -89,6 +89,11 @@ def get_trainers(env, num_adversaries, obs_shape_n, arglist):
             policy_name == 'ddpg', policy_name, policy_name == 'mmmaddpg'))
     return trainers
 
+# to-do: add get_encoders
+def get_encoders():
+    encoders = []
+    return encoders
+
 
 def train(arglist):
     if arglist.test:
@@ -100,6 +105,8 @@ def train(arglist):
         obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
         num_adversaries = min(env.n, arglist.num_adversaries)
         trainers = get_trainers(env, num_adversaries, obs_shape_n, arglist)
+        # to-do: add autoencoders
+        autoencoders = get_encoders()
         print('Using good policy {} and bad policy {} with {} adversaries'.format(arglist.good_policy, arglist.bad_policy, num_adversaries))
 
         # Initialize
@@ -188,7 +195,7 @@ def train(arglist):
                 for agent in trainers:
                     agent.preupdate()
                 for agent in trainers:
-                    loss = agent.update(trainers, train_step)
+                    loss = agent.update(trainers, autoencoders, train_step)
 
             # save model, display training output
             if terminal and (len(episode_rewards) % arglist.save_rate == 0):

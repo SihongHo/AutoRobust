@@ -212,7 +212,7 @@ class MADDPGAgentTrainer(AgentTrainer):
     def preupdate(self):
         self.replay_sample_index = None
 
-    def update(self, agents, t):
+    def update(self, agents, autoencoders, t):
         if len(self.replay_buffer) < self.max_replay_buffer_len: # replay buffer is not large enough
             return
         if not t % 100 == 0:  # only update every 100 steps
@@ -224,8 +224,14 @@ class MADDPGAgentTrainer(AgentTrainer):
         obs_next_n = []
         act_n = []
         index = self.replay_sample_index
+        # to-do: the action used in training should be the output of denoiseing autoencoder
+        # only obs_n go into denoise autoencoder
         for i in range(self.n):
             obs, act, rew, obs_next, done = agents[i].replay_buffer.sample_index(index)
+            # obs is one single agent's obs
+            obs_denoise = autoencoders[i].action(obs)
+            obs = obs_denoise
+            # use denoised obs to train the model
             obs_n.append(obs)
             obs_next_n.append(obs_next)
             act_n.append(act)
