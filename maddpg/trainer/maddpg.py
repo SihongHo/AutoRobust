@@ -54,22 +54,22 @@ def p_train(make_obs_ph_n, act_space_n, p_index, p_func, q_func, optimizer, adve
         q = q_func(q_input, 1, scope="q_func", reuse=True, num_units=num_units)[:,0]
         pg_loss = -tf.reduce_mean(q)
 
-        if adversarial:
-            num_agents = len(act_input_n)
-            if p_index < num_adversaries:
-                adv_rate = [adv_eps_s *(i < num_adversaries) + adv_eps * (i >= num_adversaries) for i in range(num_agents)]
-            else:
-                adv_rate = [adv_eps_s *(i >= num_adversaries) + adv_eps * (i < num_adversaries) for i in range(num_agents)]
-            print("      adv rate for p_index : ", p_index, adv_rate)
-            raw_perturb = tf.gradients(pg_loss, act_input_n)
-            perturb = [tf.stop_gradient(tf.nn.l2_normalize(elem, axis = 1)) for elem in raw_perturb]
-            perturb = [perturb[i] * adv_rate[i] for i in range(num_agents)]
-            new_act_n = [perturb[i] + act_input_n[i] if i != p_index
-                    else act_input_n[i] for i in range(len(act_input_n))]
+        # if adversarial:
+        #     num_agents = len(act_input_n)
+        #     if p_index < num_adversaries:
+        #         adv_rate = [adv_eps_s *(i < num_adversaries) + adv_eps * (i >= num_adversaries) for i in range(num_agents)]
+        #     else:
+        #         adv_rate = [adv_eps_s *(i >= num_adversaries) + adv_eps * (i < num_adversaries) for i in range(num_agents)]
+        #     print("      adv rate for p_index : ", p_index, adv_rate)
+        #     raw_perturb = tf.gradients(pg_loss, act_input_n)
+        #     perturb = [tf.stop_gradient(tf.nn.l2_normalize(elem, axis = 1)) for elem in raw_perturb]
+        #     perturb = [perturb[i] * adv_rate[i] for i in range(num_agents)]
+        #     new_act_n = [perturb[i] + act_input_n[i] if i != p_index
+        #             else act_input_n[i] for i in range(len(act_input_n))]
             
-            adv_q_input = tf.concat(obs_ph_n + new_act_n, 1)
-            adv_q = q_func(adv_q_input, 1, scope = "q_func", reuse=True, num_units=num_units)[:,0]
-            pg_loss = -tf.reduce_mean(q)
+        #     adv_q_input = tf.concat(obs_ph_n + new_act_n, 1)
+        #     adv_q = q_func(adv_q_input, 1, scope = "q_func", reuse=True, num_units=num_units)[:,0]
+        #     pg_loss = -tf.reduce_mean(q)
 
         loss = pg_loss + p_reg * 1e-3
 
@@ -121,21 +121,21 @@ def q_train(make_obs_ph_n, act_space_n, q_index, q_func, optimizer, adversarial,
         # target network
         target_q = q_func(q_input, 1, scope="target_q_func", num_units=num_units)[:,0]
 
-        if adversarial:
-            num_agents = len(act_ph_n)
-            if q_index < num_adversaries:
-                adv_rate = [adv_eps_s *(i < num_adversaries) + adv_eps * (i >= num_adversaries) for i in range(num_agents)]
-            else:
-                adv_rate = [adv_eps_s *(i >= num_adversaries) + adv_eps * (i < num_adversaries) for i in range(num_agents)]
-            print("      adv rate for q_index : ", q_index, adv_rate)
+        # if adversarial:
+        #     num_agents = len(act_ph_n)
+        #     if q_index < num_adversaries:
+        #         adv_rate = [adv_eps_s *(i < num_adversaries) + adv_eps * (i >= num_adversaries) for i in range(num_agents)]
+        #     else:
+        #         adv_rate = [adv_eps_s *(i >= num_adversaries) + adv_eps * (i < num_adversaries) for i in range(num_agents)]
+        #     print("      adv rate for q_index : ", q_index, adv_rate)
 
-            pg_loss = -tf.reduce_mean(target_q)
-            raw_perturb = tf.gradients(pg_loss, act_ph_n)
-            perturb = [adv_eps * tf.stop_gradient(tf.nn.l2_normalize(elem, axis = 1)) for elem in raw_perturb]
-            new_act_n = [perturb[i] + act_ph_n[i] if i != q_index
-                    else act_ph_n[i] for i in range(len(act_ph_n))]
-            adv_q_input = tf.concat(obs_ph_n + new_act_n, 1)
-            target_q = q_func(adv_q_input, 1, scope ='target_q_func', reuse=True, num_units=num_units)[:,0]
+        #     pg_loss = -tf.reduce_mean(target_q)
+        #     raw_perturb = tf.gradients(pg_loss, act_ph_n)
+        #     perturb = [adv_eps * tf.stop_gradient(tf.nn.l2_normalize(elem, axis = 1)) for elem in raw_perturb]
+        #     new_act_n = [perturb[i] + act_ph_n[i] if i != q_index
+        #             else act_ph_n[i] for i in range(len(act_ph_n))]
+        #     adv_q_input = tf.concat(obs_ph_n + new_act_n, 1)
+        #     target_q = q_func(adv_q_input, 1, scope ='target_q_func', reuse=True, num_units=num_units)[:,0]
 
         target_q_func_vars = U.scope_vars(U.absolute_scope_name("target_q_func"))
         update_target_q = make_update_exp(q_func_vars, target_q_func_vars)
