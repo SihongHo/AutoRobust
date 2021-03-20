@@ -10,7 +10,6 @@ For Multi-Agent Particle Environments (MPE) installation, please refer to https:
 ``python train.py --scenario simple``
 
 - You can replace `simple` with any environment in the MPE you'd like to run.
-- 
 
 ### Command-line options
 
